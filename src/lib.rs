@@ -36,8 +36,9 @@ pub mod raw;
 /// The JSON object type. These enum values are identical to the jsmn library
 /// enum jsmntype_t, but renamed to match Rust's conventions.
 #[repr(u32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub enum JsmnType {
+    #[default]
     JsmnUndefined = raw::jsmntype_t_JSMN_UNDEFINED,
     JsmnObject = raw::jsmntype_t_JSMN_OBJECT,
     JsmnArray = raw::jsmntype_t_JSMN_ARRAY,
@@ -106,7 +107,7 @@ impl Default for JsmnTok {
 
 /// A JsmnParser is the parser state for the jsmn library.
 #[repr(C)]
-#[derive(Debug, Copy)]
+#[derive(Debug, Copy, Default)]
 pub struct JsmnParser {
     pub pos: usize,
     pub toknext: usize,
@@ -131,16 +132,6 @@ impl JsmnParser {
 impl Clone for JsmnParser {
     fn clone(&self) -> Self {
         *self
-    }
-}
-
-impl Default for JsmnParser {
-    fn default() -> Self {
-        JsmnParser {
-            pos: 0,
-            toknext: 0,
-            toksuper: 0,
-        }
     }
 }
 
