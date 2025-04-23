@@ -187,18 +187,245 @@ pub fn jsmn_parse(
 }
 
 #[cfg(test)]
-mod test {
-    use *;
+mod tests {
+    use super::*;
+
+    macro_rules! parse {
+        ($buf: expr, $len: expr) => {{
+            let mut tokens = [JsmnTok::default(); $len];
+            let mut parser = JsmnParser::new();
+
+            jsmn_parse(&mut parser, $buf, &mut tokens).map(|parsed| {
+                assert_eq!($len, parsed);
+                tokens
+            })
+        }};
+    }
 
     #[test]
-    fn test_parse() {
-        let mut parser = JsmnParser::new();
-        let json = "{\"test\":1}";
-        let mut tokens: [JsmnTok; 20] = [Default::default(); 20];
+    fn parse_empty() {
+        let tokens = parse!(r#"{}"#, 1).unwrap();
+        assert_eq!(
+            &[JsmnTok {
+                typ: JsmnType::JsmnObject,
+                start: 0,
+                end: 2,
+                size: 0,
+                ..Default::default()
+            }],
+            &tokens
+        );
 
-        let result = jsmn_parse(&mut parser, json, &mut tokens);
+        let tokens = parse!(r#"[]"#, 1).unwrap();
+        assert_eq!(
+            &[JsmnTok {
+                typ: JsmnType::JsmnArray,
+                start: 0,
+                end: 2,
+                size: 0,
+                ..Default::default()
+            }],
+            &tokens
+        );
 
-        println!("{:?}", &tokens[..]);
-        println!("{:?}", result);
+        let tokens = parse!(r#"[{},{}]"#, 3).unwrap();
+        assert_eq!(
+            &[
+                JsmnTok {
+                    typ: JsmnType::JsmnArray,
+                    start: 0,
+                    end: 7,
+                    size: 2,
+                    ..Default::default()
+                },
+                JsmnTok {
+                    typ: JsmnType::JsmnObject,
+                    start: 1,
+                    end: 3,
+                    size: 0,
+                    #[cfg(feature = "parent-links")]
+                    parent: 0,
+                    ..Default::default()
+                },
+                JsmnTok {
+                    typ: JsmnType::JsmnObject,
+                    start: 4,
+                    end: 6,
+                    size: 0,
+                    #[cfg(feature = "parent-links")]
+                    parent: 0,
+                    ..Default::default()
+                }
+            ],
+            &tokens
+        );
+    }
+
+    #[test]
+    fn parse_object_mixed() {
+        let tokens = parse!(r#"{"a":0}"#, 3).unwrap();
+        assert_eq!(
+            &[
+                JsmnTok {
+                    typ: JsmnType::JsmnObject,
+                    start: 0,
+                    end: 7,
+                    size: 1,
+                    ..Default::default()
+                },
+                JsmnTok {
+                    typ: JsmnType::JsmnString,
+                    start: 2,
+                    end: 3,
+                    size: 1,
+                    #[cfg(feature = "parent-links")]
+                    parent: 0,
+                    ..Default::default()
+                },
+                JsmnTok {
+                    typ: JsmnType::JsmnPrimitive,
+                    start: 5,
+                    end: 6,
+                    size: 0,
+                    #[cfg(feature = "parent-links")]
+                    parent: 1,
+                    ..Default::default()
+                }
+            ],
+            &tokens
+        );
+
+        let tokens = parse!(r#"{"a":[]}"#, 3).unwrap();
+        assert_eq!(
+            &[
+                JsmnTok {
+                    typ: JsmnType::JsmnObject,
+                    start: 0,
+                    end: 8,
+                    size: 1,
+                    ..Default::default()
+                },
+                JsmnTok {
+                    typ: JsmnType::JsmnString,
+                    start: 2,
+                    end: 3,
+                    size: 1,
+                    #[cfg(feature = "parent-links")]
+                    parent: 0,
+                    ..Default::default()
+                },
+                JsmnTok {
+                    typ: JsmnType::JsmnArray,
+                    start: 5,
+                    end: 7,
+                    size: 0,
+                    #[cfg(feature = "parent-links")]
+                    parent: 1,
+                    ..Default::default()
+                }
+            ],
+            &tokens
+        );
+    }
+
+    #[test]
+    fn parse_array_single_primitive() {
+        let tokens = parse!(r#"[10]"#, 2).unwrap();
+        assert_eq!(
+            &[
+                JsmnTok {
+                    typ: JsmnType::JsmnArray,
+                    start: 0,
+                    end: 4,
+                    size: 1,
+                    ..Default::default()
+                },
+                JsmnTok {
+                    typ: JsmnType::JsmnPrimitive,
+                    start: 1,
+                    end: 3,
+                    size: 0,
+                    #[cfg(feature = "parent-links")]
+                    parent: 0,
+                    ..Default::default()
+                }
+            ],
+            &tokens
+        );
+    }
+
+    #[test]
+    fn parse_primitive_values() {
+        assert_eq!(
+            parse!(r#"{"boolVar": true}"#, 3).unwrap()[2],
+            JsmnTok {
+                typ: JsmnType::JsmnPrimitive,
+                start: 12,
+                end: 16,
+                #[cfg(feature = "parent-links")]
+                parent: 1,
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            parse!(r#"{"boolVar": false}"#, 3).unwrap()[2],
+            JsmnTok {
+                typ: JsmnType::JsmnPrimitive,
+                start: 12,
+                end: 17,
+                #[cfg(feature = "parent-links")]
+                parent: 1,
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            parse!(r#"{"nullVar": null}"#, 3).unwrap()[2],
+            JsmnTok {
+                typ: JsmnType::JsmnPrimitive,
+                start: 12,
+                end: 16,
+                #[cfg(feature = "parent-links")]
+                parent: 1,
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            parse!(r#"{"intVar": 12}"#, 3).unwrap()[2],
+            JsmnTok {
+                typ: JsmnType::JsmnPrimitive,
+                start: 11,
+                end: 13,
+                #[cfg(feature = "parent-links")]
+                parent: 1,
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            parse!(r#"{"floatVar": 12.345}"#, 3).unwrap()[2],
+            JsmnTok {
+                typ: JsmnType::JsmnPrimitive,
+                start: 13,
+                end: 19,
+                #[cfg(feature = "parent-links")]
+                parent: 1,
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn parse_invalid_escaped_unicode() {
+        assert_eq!(
+            parse!(r#"{"a":"str\uFFGFstr"}"#, 3).unwrap_err(),
+            JsmnErr::JsmErrorInval
+        );
+        assert_eq!(
+            parse!(r#"{"a":"str\u@FfF"}"#, 3).unwrap_err(),
+            JsmnErr::JsmErrorInval
+        );
+        assert_eq!(
+            parse!(r#"{{"a":["\u028"]}"#, 4).unwrap_err(),
+            JsmnErr::JsmErrorInval
+        );
     }
 }
