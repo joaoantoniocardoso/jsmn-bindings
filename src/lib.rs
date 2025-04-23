@@ -152,24 +152,38 @@ pub fn jsmn_parse(
     js: &str,
     tokens: &mut [JsmnTok],
 ) -> Result<usize, JsmnErr> {
-    let result: i32;
+    unsafe fn cast_slice_mut<T, U>(src: &mut [T]) -> &mut [U] {
+        assert_eq!(size_of::<T>(), size_of::<U>(), "Size mismatch");
+        assert_eq!(align_of::<T>(), align_of::<U>(), "Alignment mismatch");
 
+        let len = src.len();
+        let ptr = src.as_mut_ptr() as *mut U;
+        unsafe { std::slice::from_raw_parts_mut(ptr, len) }
+    }
+
+    let result: i32;
     unsafe {
+        let raw_tokens: &mut [raw::jsmntok_t] = cast_slice_mut(tokens);
+
         result = raw::jsmn_parse(
-            transmute(parser),
-            transmute(js.as_ptr()),
-            js.len() as usize,
-            transmute(tokens.as_ptr()),
-            tokens.len() as u32,
+            parser as *mut _ as *mut raw::jsmn_parser,
+            js.as_ptr() as *const _,
+            js.len(),
+            raw_tokens.as_mut_ptr(),
+            raw_tokens.len() as u32,
         );
     }
 
-    match result {
-        -1 => Err(JsmnErr::JsmErrorNoMem),
-        -2 => Err(JsmnErr::JsmErrorInval),
-        -3 => Err(JsmnErr::JsmErrorPart),
-        count => Ok(count as usize),
+    if result < 0 {
+        return match result {
+            -1 => Err(JsmnErr::JsmErrorNoMem),
+            -2 => Err(JsmnErr::JsmErrorInval),
+            -3 => Err(JsmnErr::JsmErrorPart),
+            _ => unreachable!(),
+        };
     }
+
+    Ok(result as usize)
 }
 
 #[cfg(test)]
