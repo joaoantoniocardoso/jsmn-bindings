@@ -9,6 +9,7 @@ keywords=["parser", "json", "ffi"]
 links="jsmn"
 description="Bindings and Rustic interface to the jsmn C library for JSON parsing"
 homepage="https://github.com/nsmryan/jsmn-rs"
+edition = "2024"
 
 [dependencies]
 
