@@ -35,14 +35,14 @@ pub mod raw;
 
 /// The JSON object type. These enum values are identical to the jsmn library
 /// enum jsmntype_t, but renamed to match Rust's conventions.
-#[repr(i32)]
+#[repr(u32)]
 #[derive(Debug, Copy, Clone)]
 pub enum JsmnType {
-    JsmnUndefined = raw::jsmntype_t::JSMN_UNDEFINED as i32,
-    JsmnObject = raw::jsmntype_t::JSMN_OBJECT as i32,
-    JsmnArray = raw::jsmntype_t::JSMN_ARRAY as i32,
-    JsmnString = raw::jsmntype_t::JSMN_STRING as i32,
-    JsmnPrimitive = raw::jsmntype_t::JSMN_PRIMITIVE as i32,
+    JsmnUndefined = raw::jsmntype_t_JSMN_UNDEFINED,
+    JsmnObject = raw::jsmntype_t_JSMN_OBJECT,
+    JsmnArray = raw::jsmntype_t_JSMN_ARRAY,
+    JsmnString = raw::jsmntype_t_JSMN_STRING,
+    JsmnPrimitive = raw::jsmntype_t_JSMN_PRIMITIVE,
 }
 
 /// Error type from jsmn_parse. These enum values are identical to the jsmn library
@@ -50,9 +50,9 @@ pub enum JsmnType {
 #[repr(i32)]
 #[derive(Debug, Copy, Clone)]
 pub enum JsmnErr {
-    JsmErrorNoMem = raw::jsmnerr::JSMN_ERROR_NOMEM as i32,
-    JsmErrorInval = raw::jsmnerr::JSMN_ERROR_INVAL as i32,
-    JsmErrorPart = raw::jsmnerr::JSMN_ERROR_PART as i32,
+    JsmErrorNoMem = raw::jsmnerr_JSMN_ERROR_NOMEM,
+    JsmErrorInval = raw::jsmnerr_JSMN_ERROR_INVAL,
+    JsmErrorPart = raw::jsmnerr_JSMN_ERROR_PART,
 }
 
 /// A JSON token structure, defining which type of JSON object it is, the starting
@@ -65,11 +65,11 @@ pub enum JsmnErr {
 #[derive(Debug, Copy)]
 pub struct JsmnTok {
     pub typ: JsmnType,
-    pub start: isize,
-    pub end: isize,
-    pub size: isize,
+    pub start: i32,
+    pub end: i32,
+    pub size: i32,
     #[cfg(feature = "parent-links")]
-    pub parent: isize,
+    pub parent: i32,
 }
 
 impl JsmnTok {
