@@ -36,7 +36,7 @@ pub mod raw;
 /// The JSON object type. These enum values are identical to the jsmn library
 /// enum jsmntype_t, but renamed to match Rust's conventions.
 #[repr(u32)]
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub enum JsmnType {
     #[default]
     JsmnUndefined = raw::jsmntype_t_JSMN_UNDEFINED,
@@ -49,7 +49,7 @@ pub enum JsmnType {
 /// Error type from jsmn_parse. These enum values are identical to the jsmn library
 /// enum jsmnerr_t, but renamed to match Rust's conventions.
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum JsmnErr {
     JsmErrorNoMem = raw::jsmnerr_JSMN_ERROR_NOMEM,
     JsmErrorInval = raw::jsmnerr_JSMN_ERROR_INVAL,
@@ -63,7 +63,7 @@ pub enum JsmnErr {
 /// Note that if the parent-links feature is used, then this struct will
 /// have the "parent" field, and otherwise it will not.
 #[repr(C)]
-#[derive(Debug, Copy)]
+#[derive(Debug, Copy, PartialEq)]
 pub struct JsmnTok {
     pub typ: JsmnType,
     pub start: i32,
