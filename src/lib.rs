@@ -2,7 +2,7 @@
 //! This crate exposes Rustic bindings to a gem of a C library called jsmn.
 //! The raw bindings are available in the raw module, which are wrapped in
 //! this module.
-//! 
+//!
 //!
 //! The jsmn library provides a very simple, fast JSON parser. I see it as a
 //! great example of library design- it has two enums, two structs, and two functions,
@@ -11,8 +11,8 @@
 //!
 //! This library only exposes a single function, jsmn_parse, because the jsmn_init
 //! function is called when you crate a new JsmnParser.
-//! 
-//! 
+//!
+//!
 //! To use this library, simply create a parser using JsmnParser::new()
 //! and pass the parser, a JSON string, and a slice of JsmnToks to jsmn_parse.
 //! The result will be that the slice will be filled out with tokens defining the
@@ -33,16 +33,15 @@ use std::mem::transmute;
 
 pub mod raw;
 
-
 /// The JSON object type. These enum values are identical to the jsmn library
 /// enum jsmntype_t, but renamed to match Rust's conventions.
 #[repr(i32)]
 #[derive(Debug, Copy, Clone)]
 pub enum JsmnType {
     JsmnUndefined = raw::jsmntype_t::JSMN_UNDEFINED as i32,
-    JsmnObject    = raw::jsmntype_t::JSMN_OBJECT    as i32,
-    JsmnArray     = raw::jsmntype_t::JSMN_ARRAY     as i32,
-    JsmnString    = raw::jsmntype_t::JSMN_STRING    as i32,
+    JsmnObject = raw::jsmntype_t::JSMN_OBJECT as i32,
+    JsmnArray = raw::jsmntype_t::JSMN_ARRAY as i32,
+    JsmnString = raw::jsmntype_t::JSMN_STRING as i32,
     JsmnPrimitive = raw::jsmntype_t::JSMN_PRIMITIVE as i32,
 }
 
@@ -53,7 +52,7 @@ pub enum JsmnType {
 pub enum JsmnErr {
     JsmErrorNoMem = raw::jsmnerr::JSMN_ERROR_NOMEM as i32,
     JsmErrorInval = raw::jsmnerr::JSMN_ERROR_INVAL as i32,
-    JsmErrorPart  = raw::jsmnerr::JSMN_ERROR_PART  as i32,
+    JsmErrorPart = raw::jsmnerr::JSMN_ERROR_PART as i32,
 }
 
 /// A JSON token structure, defining which type of JSON object it is, the starting
@@ -65,40 +64,43 @@ pub enum JsmnErr {
 #[repr(C)]
 #[derive(Debug, Copy)]
 pub struct JsmnTok {
-    pub typ    : JsmnType,
-    pub start  : isize,
-    pub end    : isize,
-    pub size   : isize,
-#[cfg(feature="parent-links")]
-    pub parent : isize,
+    pub typ: JsmnType,
+    pub start: isize,
+    pub end: isize,
+    pub size: isize,
+    #[cfg(feature = "parent-links")]
+    pub parent: isize,
 }
 
 impl JsmnTok {
     pub fn new() -> Self {
         JsmnTok {
-            typ    : JsmnType::JsmnUndefined,
-            start  : 0,
-            end    : 0,
-            size   : 0,
-#[cfg(feature="parent-links")]
-            parent : 0
+            typ: JsmnType::JsmnUndefined,
+            start: 0,
+            end: 0,
+            size: 0,
+            #[cfg(feature = "parent-links")]
+            parent: 0,
         }
     }
 }
 
 impl Clone for JsmnTok {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl Default for JsmnTok {
     fn default() -> Self {
-        JsmnTok { typ    : JsmnType::JsmnUndefined,
-                  start  : 0,
-                  end    : 0,
-                  size   : 0,
-#[cfg(feature="parent-links")]
-                  parent : 0
-                }
+        JsmnTok {
+            typ: JsmnType::JsmnUndefined,
+            start: 0,
+            end: 0,
+            size: 0,
+            #[cfg(feature = "parent-links")]
+            parent: 0,
+        }
     }
 }
 
@@ -106,19 +108,18 @@ impl Default for JsmnTok {
 #[repr(C)]
 #[derive(Debug, Copy)]
 pub struct JsmnParser {
-    pub pos      : usize,
-    pub toknext  : usize,
-    pub toksuper : isize,
+    pub pos: usize,
+    pub toknext: usize,
+    pub toksuper: isize,
 }
 
 impl JsmnParser {
     pub fn new() -> Self {
-        let parser = 
-            JsmnParser {
-                pos      : 0,
-                toknext  : 0,
-                toksuper : 0
-            };
+        let parser = JsmnParser {
+            pos: 0,
+            toknext: 0,
+            toksuper: 0,
+        };
         unsafe {
             raw::jsmn_init(transmute(&parser));
         }
@@ -128,15 +129,18 @@ impl JsmnParser {
 }
 
 impl Clone for JsmnParser {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl Default for JsmnParser {
     fn default() -> Self {
-        JsmnParser { pos      : 0,
-                     toknext  : 0,
-                     toksuper : 0,
-                   }
+        JsmnParser {
+            pos: 0,
+            toknext: 0,
+            toksuper: 0,
+        }
     }
 }
 
@@ -152,23 +156,27 @@ impl Default for JsmnParser {
 /// If the function succeeds, it will return a usize giving how many
 /// tokens were parsed, and on error it will return an JsmnErr describing the
 /// problem encountered while parsing.
-pub fn jsmn_parse(parser: &mut JsmnParser,
-                  js: &str,
-                  tokens: &mut [JsmnTok]) -> Result<usize, JsmnErr> {
-    let result : i32;
+pub fn jsmn_parse(
+    parser: &mut JsmnParser,
+    js: &str,
+    tokens: &mut [JsmnTok],
+) -> Result<usize, JsmnErr> {
+    let result: i32;
 
     unsafe {
-        result = raw::jsmn_parse(transmute(parser),
-                                 transmute(js.as_ptr()),
-                                 js.len() as usize,
-                                 transmute(tokens.as_ptr()),
-                                 tokens.len() as u32);
+        result = raw::jsmn_parse(
+            transmute(parser),
+            transmute(js.as_ptr()),
+            js.len() as usize,
+            transmute(tokens.as_ptr()),
+            tokens.len() as u32,
+        );
     }
 
     match result {
-        -1    => Err(JsmnErr::JsmErrorNoMem),
-        -2    => Err(JsmnErr::JsmErrorInval),
-        -3    => Err(JsmnErr::JsmErrorPart),
+        -1 => Err(JsmnErr::JsmErrorNoMem),
+        -2 => Err(JsmnErr::JsmErrorInval),
+        -3 => Err(JsmnErr::JsmErrorPart),
         count => Ok(count as usize),
     }
 }
@@ -181,7 +189,7 @@ mod test {
     fn test_parse() {
         let mut parser = JsmnParser::new();
         let json = "{\"test\":1}";
-        let mut tokens : [JsmnTok; 20] = [Default::default(); 20];
+        let mut tokens: [JsmnTok; 20] = [Default::default(); 20];
 
         let result = jsmn_parse(&mut parser, json, &mut tokens);
 
@@ -189,4 +197,3 @@ mod test {
         println!("{:?}", result);
     }
 }
-
