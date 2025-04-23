@@ -13,8 +13,8 @@ homepage="https://github.com/nsmryan/jsmn-rs"
 [dependencies]
 
 [build-dependencies]
-cc="1.0.25"
-bindgen="0.26.3"
+cc="1.2.19"
+bindgen="0.71.1"
 
 [features]
 parent-links = []
