@@ -94,13 +94,13 @@ impl Clone for JsmnTok {
 
 impl Default for JsmnTok {
     fn default() -> Self {
-        JsmnTok {
-            typ: JsmnType::JsmnUndefined,
-            start: 0,
-            end: 0,
-            size: 0,
+        Self {
+            typ: Default::default(),
+            start: Default::default(),
+            end: Default::default(),
+            size: Default::default(),
             #[cfg(feature = "parent-links")]
-            parent: 0,
+            parent: -1,
         }
     }
 }
